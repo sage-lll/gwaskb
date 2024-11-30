@@ -160,3 +160,62 @@ The result is a list of TSV files containing facts (e.g. mutation/disease relati
 ## Feedback
 
 Please send feedback to [Volodymyr Kuleshov](http://web.stanford.edu/~kuleshov/).
+
+## Appendix
+Database Design
+1.	Overview
+Analysing the initially provided database, we found that its format references the ICGC (International Cancer Genome Consortium). This research project was initiated in 2008 with the aim of accelerating advances in cancer treatment and diagnosis by comprehensively mapping the cancer genome, identifying the genetic variants that drive cancer, and opening up this database to researchers around the globe.The ICGC's database contains mutation data, gene expression data, clinical data, and genetic data[1].
+
+2.	Required data and structure
+Due to hardware and software limitations, this assignment is based on a small database created from an Excel-formatted data sheet provided by the university. The database fully contains the amount of information provided by the approximately 300,000 data items in the table, which can be classified as sample and mutation data in the ICGC database.
+To realise the interactive functionality of the website, we have added several new patients with fictitious identifying information such as names and created a clinical database based on their basic information. In addition, according to the functionality required by the syllabus, we created a database containing information about oncologists.
+To ensure that the information about patients and oncologists is authentic and reliable, we integrated the data directly into the Patient or Oncologist table. In our conception, the data should come from accredited healthcare or research institutions, shared through external databases, and identified by a unique patient ID or oncologist ID.
+Following the principle of voluntariness, patients can give their consent to provide mutation data for this database either anonymously (only icgc_specimen_id) or with their real names (details such as name in addition to icgc_specimen_id). However, in order to maintain the security of the database, Oncologists with access and modification rights require more stringent authentication. This section will be discussed in the next paragraph as well as in the section on web filtering logic.
+	The user database enables us to accurately identify the user based on the unique userID generated when registering the user based on the data already in the database. Therefore, when registering a user with the role of Oncologist, the unique oncologist ID needs to be verified from the existing database, and in extreme cases where the same person has different roles (e.g., when there is a certain oncologist who also has cancer), they should also have different user IDs to differentiate between different permissions. For patients who volunteer their real names in order to view information about their mutations, the registration of the user ID can be verified by the existing patient ID in the database.
+Due to our lack of manpower, the function of Input new mutation has been deleted for the sake of fairness. However, in the future, if there is a need in this area, the database can still be updated through a series of query operations.
+	
+3.	Table design
+This part was assigned to Xinyue because of our poor consideration during the pre-task assignment, but it is closely related to the database and directly or indirectly affects the shape of the database and the interaction between the front and back end, so we had a lot of close discussions and finally decided that it should be executed by me (Ningjia).
+
+3.1 Normalisation, layout, design
+For the initial provided mutation table (here called original), it needs to be Normalized according to the data structure, in order to facilitate the retrieval, I firstly generated a unique primary key ID for each record, and then, analyse the data in it, which can be roughly divided into several types of data.
+
+	1）Cancer table
+	The cancer_type in the table is a text type, which takes up a lot of memory, and these types will appear several times in the following table, it is better to extract them as a new table.
+It contains 8 items of data from the original database and 2 items of data from the demo database, as well as 10 types that may appear in the future, for a total of 22 items of data.
+
+	2）Mutation Table
+	The table generates a unique Mutation ID (primary key), location (chromosome, start-end,...). . Due to the strong correlation of the subsequent data (often occurring at the same time when filtering) and for ease of comparison, no further simplification was performed. Although many of the same texts are present in TYPE, they are of fewer types, take up little storage resources, and are similarly retained.
+It contains 297,431 entries from the original database and 14 entries from the demo database, for a total of 297,445 entries.
+
+	3）Link table between icgc-specimen-id and Mutation
+	This table corresponds all the icgc- specimen-id in Original to all the mutation IDs it contains, indicating the unique Mutation corresponding to each piece of data.This mapping table ensures that all the information in Original is retained, and significantly reduces the memory footprint, especially for duplicate data entries.
+It contains 303028 entries from the Original database and 14 entries from the demo database, for a total of 303042 entries.
+
+	4）Gene table
+	This table generates a unique geneID as the primary key, corresponding to a unique gene. since there are many variants that are located in the current non-gene region, or for other reasons that do not affect the gene, they are shown as NULL values in the Original table. This optimisation is also important because it eliminates the presence of null values in the table (corresponding NULL values to geneID=1), facilitating data validation and future maintenance.
+	This includes 36,378 entries from the original database and 2 entries from the demo database, for a total of 36,380 entries.
+ 
+  5) Link table between geneID and Mutation
+Since the same gene ID may correspond to multiple Mutation ID mutations, in order to simplify the Mutation table while ensuring that the information content of the data is not reduced, a correspondence table between gene ID and Mutation was created.
+The table contains 186,459 data from the original database and 8 data from the demo database, totalling 186,467 data.
+
+	6) Patient table
+	Stores information about the patient. Includes 4 data for the demo database.
+
+	7) Oncologist table
+Stores information about the patient. Includes 3 data items from the demo database.
+
+	8) User table
+Stores information about users who have registered through the web page.
+
+	9) Specimen and Patient Correspondence Table
+	If there is a need to update the Mutation database in the future, this table can be queried. Includes 4 data from the demo database.
+
+	10) Action table
+Stores the activities performed by each user.
+
+Reference
+[1]The International Cancer Genome Consortium. International network of cancer genome projects. Nature 464, 993–998 (2010). https://doi.org/10.1038/nature08987
+
+
